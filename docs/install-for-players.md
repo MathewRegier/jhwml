@@ -12,6 +12,6 @@ A Steam update or **Verify integrity of game files** can remove the loader. Run 
 
 If Happy Wheels itself gets a new version, wait for a new launcher. This framework is built for **1.99.2**.
 
-Launcher self-updates download from [github.com/MathewRegier/jhwml](https://github.com/MathewRegier/jhwml). Mods still download from the [relay catalog](https://github.com/MathewRegier/happy-wheels-ghost-relay).
+Launcher self-updates download from [github.com/MathewRegier/jhwml](https://github.com/MathewRegier/jhwml).
 
-Help: Discord **jimbob1111**.
+Help: [Join Discord](https://discord.gg/XcZePBgDBJ).

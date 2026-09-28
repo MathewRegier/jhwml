@@ -2,15 +2,13 @@
 
 Windows launcher and mod framework for Steam **Happy Wheels 1.99.2**.
 
-Created by Jimbob · Discord **jimbob1111**
+Created by Jimbob · [Join Discord](https://discord.gg/XcZePBgDBJ)
 
 This repository does **not** include Happy Wheels, `Happy Wheels.exe`, or `app.asar`. You need a legal Steam copy of the game.
 
 **Docs:** [https://mathewregier.github.io/jhwml/](https://mathewregier.github.io/jhwml/)
 
 Other developers: start at [Your first mod](docs/first-mod.md), then [Make a mod](docs/make-a-mod.md). The stable in-game API is [`window.HWMod`](docs/api.md).
-
-The live mod catalog and the multiplayer relay stay on [happy-wheels-ghost-relay](https://github.com/MathewRegier/happy-wheels-ghost-relay).
 
 ## Requirements
 
@@ -47,7 +45,7 @@ Shipped EXEs check:
 
 `https://raw.githubusercontent.com/MathewRegier/jhwml/main/mod-store/launcher.json`
 
-The zip URL in that file should be a **GitHub Release** on this repo (`jhwml/releases`). The mod catalog stays on [happy-wheels-ghost-relay](https://github.com/MathewRegier/happy-wheels-ghost-relay).
+The zip URL in that file should be a **GitHub Release** on this repo (`jhwml/releases`).
 
 To ship a new EXE:
 
@@ -56,7 +54,6 @@ To ship a new EXE:
 3. `python tools\publish_launcher.py`
 4. Commit `mod-store/launcher.json` on this repo
 5. `gh release create vX.Y.Z mod-store\zips\JHWML-Mod-Launcher-X.Y.Z.zip --title "JHWML X.Y.Z"`
-6. Push the copied `launcher.json` on the relay repo too, so existing **0.2.2** EXEs (which still look next to `catalog.json`) can update once. After that they check this repo.
 
 ## Layout
 
@@ -71,6 +68,6 @@ To ship a new EXE:
 
 ## Help
 
-Discord: **jimbob1111**
+[Join Discord](https://discord.gg/XcZePBgDBJ)
 
 Docs site: **Settings → Pages** is already set to **Deploy from a branch → `/docs`**. After a push, wait a minute for [https://mathewregier.github.io/jhwml/](https://mathewregier.github.io/jhwml/).

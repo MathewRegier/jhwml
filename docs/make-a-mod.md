@@ -67,4 +67,4 @@ Use [`window.HWMod`](api.md). Do not copy webpack module IDs out of other mods.
 
 ## Publishing
 
-Local drop-in is enough to play. To appear in the public launcher catalog, ask Jimbob (Discord **jimbob1111**). Catalog zips still live on the relay repo.
+Local drop-in is enough to play. To appear in the public launcher catalog, [ask on Discord](https://discord.gg/XcZePBgDBJ).

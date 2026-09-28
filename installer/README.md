@@ -2,7 +2,7 @@
 
 A desktop installer for friends who do not have Python or Node. It patches Happy Wheels once with a core mod loader and can seed **Jimbob's Multiplayer Mod**. After that, drop a folder into `mods` and restart the game. A Steam update or “Verify files” can remove the loader; run the installer again only then.
 
-Other developers: [docs/index.md](../docs/index.md). Public launcher repo: [github.com/MathewRegier/jhwml](https://github.com/MathewRegier/jhwml).
+Other developers: [docs/index.md](../docs/index.md). Public launcher repo: [github.com/MathewRegier/jhwml](https://github.com/MathewRegier/jhwml). Discord: [https://discord.gg/XcZePBgDBJ](https://discord.gg/XcZePBgDBJ).
 
 ## Build the .exe
 

@@ -7,7 +7,7 @@ import subprocess
 import sys
 import threading
 import traceback
-
+import webbrowser
 
 import tkinter as tk
 from tkinter import filedialog, ttk
@@ -36,7 +36,8 @@ LINE = '#3b4a44'
 PATH_BG = '#0d1210'
 STEPS = ('welcome', 'locate', 'mods', 'install', 'done')
 STEP_LABELS = ('Welcome', 'Find the game', 'Choose mods', 'Install', 'Ready')
-CREDITS = 'Created by Jimbob · Discord jimbob1111'
+DISCORD_INVITE = 'https://discord.gg/XcZePBgDBJ'
+CREDITS = 'Created by Jimbob'
 
 
 def log_path() -> pathlib.Path:
@@ -125,11 +126,14 @@ class Launcher(tk.Tk):
             row.pack(fill='x', pady=6)
             self.step_labels.append(row)
 
+        credits = tk.Frame(rail, bg=RAIL)
+        credits.pack(side='bottom', anchor='w')
         tk.Label(
-            rail,
+            credits,
             text=CREDITS,
             fg=MINT, bg=RAIL, font=('Georgia', 9, 'bold'), wraplength=200, justify='left',
-        ).pack(side='bottom', anchor='w')
+        ).pack(anchor='w')
+        self._discord_link(credits, bg=RAIL)
         tk.Label(
             rail,
             text='Keep this launcher. It updates itself and can re-patch the game after a Steam update.',
@@ -152,6 +156,19 @@ class Launcher(tk.Tk):
     def _heading(self, parent: tk.Widget, title: str, lede: str) -> None:
         tk.Label(parent, text=title, fg=INK, bg=STEEL, font=('Georgia', 28, 'bold'), justify='left', wraplength=620).pack(anchor='w')
         tk.Label(parent, text=lede, fg=MUTED, bg=STEEL, font=('Georgia', 12), justify='left', wraplength=620).pack(anchor='w', pady=(8, 22))
+
+    def _discord_link(self, parent: tk.Widget, bg: str, **pack) -> None:
+        link = tk.Label(
+            parent,
+            text='Join Discord',
+            fg=MINT,
+            bg=bg,
+            font=('Georgia', 9, 'bold'),
+            cursor='hand2',
+            justify='left',
+        )
+        link.pack(anchor='w', **pack)
+        link.bind('<Button-1>', lambda _event: webbrowser.open(DISCORD_INVITE))
 
     def _card(self, parent: tk.Widget) -> tk.Frame:
         card = tk.Frame(parent, bg=CARD, highlightbackground=LINE, highlightthickness=1, padx=16, pady=16)
@@ -269,7 +286,7 @@ class Launcher(tk.Tk):
         self._heading(
             page,
             'Ready to play.',
-            'Keep this launcher and open it for future mod or launcher updates. If Happy Wheels updates, open the launcher again so it can update itself and re-patch the game.\n\nCreated by Jimbob · Discord jimbob1111',
+            'Keep this launcher and open it for future mod or launcher updates. If Happy Wheels updates, open the launcher again so it can update itself and re-patch the game.\n\nCreated by Jimbob · https://discord.gg/XcZePBgDBJ',
         )
         tk.Label(page, textvariable=self.done_path, fg='#9aa79e', bg=STEEL, font=('Consolas', 10), wraplength=620, justify='left').pack(anchor='w')
         actions = self._actions(page)

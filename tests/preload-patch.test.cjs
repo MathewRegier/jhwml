@@ -33,16 +33,20 @@ print(Path(${JSON.stringify(preload)}).read_text(encoding='utf-8'))`);
   assert.equal(out.split('mod-runtime').length - 1, 1);
 });
 
-test('packager inlines the current Steam bridge into the game preload', () => {
+test('packager inlines an optional Steam bridge into the game preload', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hw-preload-'));
   const preload = path.join(dir, 'preload.js');
   fs.writeFileSync(preload, `(()=>{"use strict";const e=require("electron");e.contextBridge.exposeInMainWorld("hwNative",{})})();\n`);
   const hookPath = path.join(dir, 'hook.cjs');
   fs.writeFileSync(hookPath, hook);
-  const transport = fs.readFileSync(path.join(__dirname, '..', 'mods', 'jimbobs-multiplayer', 'electron', 'transport-preload.cjs'), 'utf8');
+  const transportPath = path.join(dir, 'transport-preload.cjs');
+  fs.writeFileSync(
+    transportPath,
+    `(() => {\n  const {contextBridge,ipcRenderer}=require('electron');\n  contextBridge.exposeInMainWorld('hwGhostSteam',{\n    steamInvite:()=>ipcRenderer.invoke('ghost:invite')\n  });\n})();\n`,
+  );
   python(`from packager import patch_game_preload
 from pathlib import Path
-transport = Path(${JSON.stringify(path.join(__dirname, '..', 'mods', 'jimbobs-multiplayer', 'electron', 'transport-preload.cjs'))}).read_text(encoding='utf-8')
+transport = Path(${JSON.stringify(transportPath)}).read_text(encoding='utf-8')
 patch_game_preload(Path(${JSON.stringify(preload)}), Path(${JSON.stringify(hookPath)}).read_text(encoding='utf-8'), transport)
 print(Path(${JSON.stringify(preload)}).read_text(encoding='utf-8'))`);
   const out = fs.readFileSync(preload, 'utf8');

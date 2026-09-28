@@ -18,3 +18,5 @@ A small **ride card** overlay. It is the worked example for the SDK tutorial.
 Then open `web/main.js`. Every `STEP` comment matches a heading in the tutorial.
 
 When you make your own mod, change the `id` in `mod.json` and rename the folder to match. Two mods cannot share an `id`.
+
+Help: [Join Discord](https://discord.gg/XcZePBgDBJ)

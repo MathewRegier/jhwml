@@ -137,7 +137,7 @@ Rules that keep mods from fighting:
 - No double impulses
 - Prefer reading on `tick`, or one force if you must push
 
-Webpack module numbers stay inside `core/hw-mod-sdk.js`. If you need a new hook, ask on Discord instead of copying IDs from another mod.
+Webpack module numbers stay inside `core/hw-mod-sdk.js`. If you need a new hook, [ask on Discord](https://discord.gg/XcZePBgDBJ) instead of copying IDs from another mod.
 
 ## STEP 9 — Restart the game
 

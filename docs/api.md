@@ -57,4 +57,4 @@ One tick bus. Shared Physics (Jimbob's Multiplayer) already owns `run30fps` / `S
 
 ## What stays inside the SDK
 
-Numeric webpack IDs, minified Pixi export names, and the `Tmu*` chunk inject. If you need a new hook, ask for it on Discord rather than copying IDs from `ghost.js`.
+Numeric webpack IDs, minified Pixi export names, and the `Tmu*` chunk inject. If you need a new hook, [ask on Discord](https://discord.gg/XcZePBgDBJ) rather than copying IDs from `ghost.js`.
