@@ -1,4 +1,17 @@
-"""Install mods into the Happy Wheels Steam folder."""
+"""Install mods into the Happy Wheels Steam folder.
+
+The launcher calls install(). That:
+
+  1. Checks you're on Steam 1.99.2 (hashes in game-manifest.json)
+  2. Backs up Happy Wheels.exe + app.asar the first time
+  3. Copies selected mods into Happy Wheels\\mods\\
+  4. Unpacks the asar, drops in core/ (the loader + SDK), patches
+     electron/out/main.js and preload.js
+  5. Repacks app.asar and rewrites the SHA256 the EXE bakes in
+
+Steam "Verify integrity of game files" undoes all of this. Run the
+launcher again after that.
+"""
 from __future__ import annotations
 
 import hashlib
@@ -18,6 +31,9 @@ GAME_VERSION = '1.99.2'
 
 
 def strip_inlined_hw_ghost_net(text: str) -> str:
+    # Older EXEs pasted the multiplayer hwGhostNet bridge straight into
+    # preload.js. The mod ships that itself now, so peel any leftover IIFE
+    # out before we append the current hook.
     marker = "exposeInMainWorld('hwGhostNet'"
     alt = 'exposeInMainWorld("hwGhostNet"'
     while marker in text or alt in text:
@@ -40,6 +56,8 @@ def patch_game_preload(preload: pathlib.Path, hook: str, transport: str = '') ->
     current = strip_inlined_hw_ghost_net(preload.read_text(encoding='utf-8'))
     transport = (transport or '').strip()
     if transport:
+        # Optional Steam-invite bridge from jimbobs-multiplayer. Empty string
+        # if that mod isn't in the game folder yet.
         current = current.rstrip() + '\n' + transport + '\n'
     hook = hook.strip() + '\n'
     if 'mod-runtime' not in current:
@@ -71,6 +89,8 @@ def patch_live_asar_preload(game: pathlib.Path, transport: str, hook: str) -> st
     hs = struct.unpack_from('<I', packed_blob, 4)[0]
     header = json.loads(packed_blob[16:16 + struct.unpack_from('<I', packed_blob, 12)[0]])
     old_header = json.loads(blob[16:16 + struct.unpack_from('<I', blob, 12)[0]])
+    # steamworks.js lives unpacked next to the asar. Copy the original
+    # directory entry so the EXE's integrity check still matches.
     header.setdefault('files', {}).setdefault('node_modules', {'files': {}})['files']['steamworks.js'] = old_header['files']['node_modules']['files']['steamworks.js']
     raw = json.dumps(header, separators=(',', ':')).encode()
     pad = (-len(raw)) % 4
@@ -91,7 +111,7 @@ def patch_live_asar_preload(game: pathlib.Path, transport: str, hook: str) -> st
     try:
         exe.write_bytes(exe_bytes.replace(old_hash, new_hash))
     except OSError:
-        packed.write_bytes(blob)
+        packed.write_bytes(blob)  # don't leave a patched asar next to a stock EXE
         raise ValueError('Close Happy Wheels completely, then try again.')
     return 'patched'
 
@@ -103,6 +123,11 @@ def project_root() -> pathlib.Path:
 
 
 def unpack_asar(blob: bytes) -> dict[str, bytes]:
+    # Electron asar layout (little-endian):
+    #   [0:8]   pickle size of the header pickle
+    #   [8:16]  pickle size of the JSON
+    #   [16:]   JSON directory, 4-byte padded, then concatenated file bytes
+    # Offsets in the JSON are relative to the start of those file bytes.
     size = struct.unpack_from('<I', blob, 4)[0]
     length = struct.unpack_from('<I', blob, 12)[0]
     header = json.loads(blob[16:16 + length])
@@ -129,7 +154,7 @@ def pack_asar(files: dict[str, bytes]) -> bytes:
         parts = name.split('/')
         for part in parts[:-1]:
             directory = directory.setdefault(part, {'files': {}})['files']
-        block = 4194304
+        block = 4194304  # Electron's default integrity block size
         directory[parts[-1]] = {
             'size': len(content),
             'offset': str(len(body)),
@@ -156,6 +181,8 @@ def sha256_file(path: pathlib.Path) -> str:
 
 
 def load_mods(mods_dir: pathlib.Path) -> list[dict]:
+    # Each subfolder with a mod.json is a mod. Missing fields get defaults
+    # so old drops still load.
     catalog = []
     if not mods_dir.is_dir():
         return catalog
@@ -202,6 +229,7 @@ def find_happy_wheels() -> pathlib.Path | None:
         if not root.exists():
             continue
         libraries = [root]
+        # Extra libraries live in libraryfolders.vdf ("path" "D:\\SteamLibrary").
         vdf = root / 'steamapps' / 'libraryfolders.vdf'
         if vdf.exists():
             text = vdf.read_text(encoding='utf-8', errors='ignore')
@@ -221,6 +249,8 @@ def looks_like_game(path: pathlib.Path) -> bool:
 
 
 def _unlock(path: pathlib.Path) -> None:
+    # Steam / Explorer sometimes marks files read-only. FILE_ATTRIBUTE_NORMAL (0x80)
+    # is the Windows way to clear that before we delete.
     try:
         os.chmod(path, stat.S_IWRITE | stat.S_IREAD)
     except OSError:
@@ -248,6 +278,8 @@ def _rmtree_error(func, path, _exc) -> None:
 
 
 def force_remove(path: pathlib.Path, label: str | None = None) -> None:
+    # Retry because Explorer or the still-running game likes to hold a handle
+    # for a few hundred ms after you think you closed it.
     path = pathlib.Path(path)
     if not path.exists() and not path.is_symlink():
         return
@@ -272,7 +304,7 @@ def force_remove(path: pathlib.Path, label: str | None = None) -> None:
 
 
 def replace_tree(source: pathlib.Path, dest: pathlib.Path, label: str | None = None) -> None:
-    """Delete dest completely, then copy source into a fresh folder. Never merge."""
+    """Swap dest for a fresh copy of source. Never merge leftover files from the old folder."""
     source = pathlib.Path(source)
     dest = pathlib.Path(dest)
     name = label or dest.name
@@ -332,6 +364,8 @@ def install(source: pathlib.Path, dest: pathlib.Path | None = None, enabled_ids:
     if not looks_like_game(game):
         raise ValueError('That folder does not look like Happy Wheels.')
 
+    # SHA256 of stock 1.99.2 files. Frozen EXE looks next to packager.py
+    # (copied into the bundle as tools/game-manifest.json).
     manifest_path = root / 'tools' / 'game-manifest.json'
     if not manifest_path.exists():
         manifest_path = root / 'game-manifest.json'
@@ -349,6 +383,8 @@ def install(source: pathlib.Path, dest: pathlib.Path | None = None, enabled_ids:
             return False
         return 'hw-mod-boot' in main or 'hw-mod-loader' in main
 
+    # Steam replaced app.asar (verify / game update) but our old backup is
+    # still sitting there. Snapshot the new stock files before we patch.
     if packed.exists() and original.exists() and packed.read_bytes() != original.read_bytes() and not asar_is_patched(packed.read_bytes()):
         note(3, 'Steam updated Happy Wheels. Replacing the old backup and patching the new files…')
         shutil.copy2(packed, original)
@@ -362,6 +398,8 @@ def install(source: pathlib.Path, dest: pathlib.Path | None = None, enabled_ids:
     def read_game(name: str) -> bytes:
         return game.joinpath(*pathlib.PurePosixPath(name).parts).read_bytes()
 
+    # After the first install the EXE + asar hashes won't match stock, by
+    # design. Skip those two; everything else still has to be 1.99.2.
     skip = {'Happy Wheels.exe', 'resources/app.asar'} if already else set()
     for name, expected in manifest.items():
         if name in skip:
@@ -400,6 +438,7 @@ def install(source: pathlib.Path, dest: pathlib.Path | None = None, enabled_ids:
     from mod_store import cache_dir, is_newer
     bundled = root / 'mods'
     chosen: dict[str, dict] = {}
+    # Prefer the downloaded cache over anything shipped inside the EXE.
     for folder in (cache_dir() / 'mods', bundled):
         if not folder.is_dir():
             continue
@@ -420,10 +459,13 @@ def install(source: pathlib.Path, dest: pathlib.Path | None = None, enabled_ids:
             replace_tree(mod['path'], target, mod.get('name') or mod['id'])
     installed_mods = load_mods(game / 'mods')
     if enabled_ids is not None:
+        # Drop-in folders the catalog doesn't know about stay put.
         installed_mods = [mod for mod in installed_mods if mod['id'] in enabled_ids or mod['id'] not in catalog_ids]
 
     note(46, 'Preparing the mod loader…')
     app = resources / 'app'
+    # Unpack the *stock* asar, not the currently patched one, so a reinstall
+    # doesn't stack patches on top of patches.
     for name, data in unpack_asar(original.read_bytes()).items():
         dest_file = app / name
         dest_file.parent.mkdir(parents=True, exist_ok=True)
@@ -453,6 +495,8 @@ def install(source: pathlib.Path, dest: pathlib.Path | None = None, enabled_ids:
     runtime = resources / 'mod-runtime'
     runtime.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(core_dir / 'asset-override.js', runtime / 'asset-override.js')
+    # Placeholder. The game's main process rewrites this on boot from the
+    # enabled mods' web[] list (see core/boot-list.cjs).
     (webroot_js / 'hw-mod-boot.js').write_text(
         '// Replaced when Happy Wheels starts. Drop a folder into mods and restart the game.\n',
         encoding='utf-8',
@@ -466,6 +510,8 @@ def install(source: pathlib.Path, dest: pathlib.Path | None = None, enabled_ids:
     if main.count(before) != 1:
         raise ValueError('Unexpected HTML loader; refusing to patch this build.')
     if boot not in main:
+        # Inject before the stock webpack bundle so HWMod exists when mods run.
+        # The extra escaped slash is how the string actually appears in main.js.
         main = main.replace(before, boot + '<\\/script>' + before)
     if 'require("./hw-mod-loader.js")' not in main:
         main += '\nrequire("./hw-mod-loader.js");\n'
@@ -490,6 +536,9 @@ def install(source: pathlib.Path, dest: pathlib.Path | None = None, enabled_ids:
     pad = (-len(raw)) % 4
     pickle = struct.pack('<II', 4 + len(raw) + pad, len(raw)) + raw + b'\0' * pad
     packed.write_bytes(struct.pack('<II', 4, len(pickle)) + pickle + blob[8 + hs:])
+    # Happy Wheels.exe embeds sha256 of the asar JSON header. Swap it or
+    # the game opens to a blank window. Always start from the stock backup
+    # so we don't chase a hash we wrote last time.
     exe = exe_backup.read_bytes()
     old_length = struct.unpack_from('<I', original_blob, 12)[0]
     old_hash = hashlib.sha256(original_blob[16:16 + old_length]).hexdigest().encode()
@@ -498,7 +547,7 @@ def install(source: pathlib.Path, dest: pathlib.Path | None = None, enabled_ids:
         raise ValueError('Unexpected executable integrity resource.')
     (game / 'Happy Wheels.exe').write_bytes(exe.replace(old_hash, new_hash))
     if app.exists():
-        shutil.rmtree(app)
+        shutil.rmtree(app)  # working copy; the game only reads app.asar
     (game / 'install.json').write_text(json.dumps({
         'gameVersion': GAME_VERSION,
         'launcherVersion': VERSION,

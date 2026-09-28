@@ -1,4 +1,13 @@
-"""Download Happy Wheels mods from a public catalog (GitHub raw, R2, etc.)."""
+"""Download Happy Wheels mods from a public catalog (GitHub raw, R2, etc.).
+
+The catalog JSON lives on happy-wheels-ghost-relay, not this repo:
+
+  https://raw.githubusercontent.com/MathewRegier/happy-wheels-ghost-relay/main/mod-store/catalog.json
+
+Zips land in %LOCALAPPDATA%\\HappyWheelsModLauncher\\mods\\ so the next
+launch can work offline. HW_MOD_CATALOG_URL / HW_MOD_CACHE override that
+for testing.
+"""
 from __future__ import annotations
 
 import hashlib
@@ -17,7 +26,7 @@ DEFAULT_CATALOG_URL = os.environ.get(
     'HW_MOD_CATALOG_URL',
     'https://raw.githubusercontent.com/MathewRegier/happy-wheels-ghost-relay/main/mod-store/catalog.json',
 )
-SAFE_ID = re.compile(r'^[a-z0-9][a-z0-9-]{0,47}$')
+SAFE_ID = re.compile(r'^[a-z0-9][a-z0-9-]{0,47}$')  # catalog ids; runtime allows a bit more
 
 
 def cache_dir() -> pathlib.Path:
@@ -46,6 +55,7 @@ def _read_url(url: str, timeout: int = 20) -> bytes:
 
 
 def catalog_base(url: str) -> str:
+    # Relative "file" fields in catalog.json are next to the JSON itself.
     return url.rsplit('/', 1)[0] + '/'
 
 
@@ -59,7 +69,7 @@ def fetch_catalog(url: str = DEFAULT_CATALOG_URL) -> dict:
             continue
         mod_id = str(item.get('id') or '')
         if not SAFE_ID.match(mod_id):
-            continue
+            continue  # skip junk / path-traversal ids from a bad catalog
         file_name = str(item.get('file') or item.get('url') or '')
         if not file_name:
             continue
@@ -77,6 +87,7 @@ def fetch_catalog(url: str = DEFAULT_CATALOG_URL) -> dict:
 
 
 def _safe_extract(archive: zipfile.ZipFile, dest: pathlib.Path) -> None:
+    # Zip-slip: refuse members that would write outside dest (../, absolute paths).
     dest = dest.resolve()
     dest.mkdir(parents=True, exist_ok=True)
     for info in archive.infolist():
@@ -87,6 +98,7 @@ def _safe_extract(archive: zipfile.ZipFile, dest: pathlib.Path) -> None:
 
 
 def _normalize_extracted(extracted: pathlib.Path, mod_id: str) -> pathlib.Path:
+    # GitHub zips are either flat (mod.json at the root) or one folder deep.
     if (extracted / 'mod.json').is_file():
         return extracted
     nested = extracted / mod_id
@@ -171,6 +183,8 @@ def sync_mods(
         catalog = fetch_catalog(catalog_url)
         note('Checked the online mod library.')
     except (urllib.error.URLError, TimeoutError, ValueError, OSError):
+        # Airport wifi, GitHub down, whatever — still show whatever we
+        # already cached so they can reinstall without the network.
         note('Could not reach the online mod library. Using the copy stored on this computer.')
         result = list(local.values())
         for item in result:

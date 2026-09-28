@@ -1,4 +1,15 @@
-"""JHWML - Mod Launcher — desktop installer for friends who do not have Python or Node."""
+"""JHWML - Mod Launcher.
+
+Tk window friends actually run. Finds Steam Happy Wheels, pulls the public
+mod catalog, then calls packager.install() to patch the game in place.
+
+  welcome → locate game → pick mods → write the asar → done
+
+A self-update check can jump in before install. Network work stays on
+background threads; anything that touches widgets hops back with after(0, ...).
+
+installer/build.ps1 turns this file into the one-file EXE.
+"""
 from __future__ import annotations
 
 import os
@@ -12,6 +23,9 @@ import webbrowser
 import tkinter as tk
 from tkinter import filedialog, ttk
 
+# Frozen EXE: PyInstaller unpacks data files to sys._MEIPASS (a temp folder).
+# Running from source, this file lives in installer/, so the repo root is
+# one level up. tools/ has to be on sys.path either way for the imports below.
 if getattr(sys, 'frozen', False):
     BUNDLE = pathlib.Path(sys._MEIPASS)
     sys.path.insert(0, str(BUNDLE / 'tools'))
@@ -25,6 +39,7 @@ from launcher_update import apply_and_restart, check_for_update, download_update
 from launcher_version import NAME, VERSION  # noqa: E402
 from mod_store import DEFAULT_CATALOG_URL, sync_mods  # noqa: E402
 
+# Named so the layout code isn't a pile of hex. Steel/rail/coral is the look.
 INK = '#f3ead6'
 MUTED = '#b7c0b6'
 STEEL = '#121916'
@@ -41,6 +56,8 @@ CREDITS = 'Created by Jimbob'
 
 
 def log_path() -> pathlib.Path:
+    # Friends can send this file without digging through Steam. Same folder
+    # the catalog cache uses (see tools/mod_store.py).
     root = pathlib.Path(os.environ.get('LOCALAPPDATA') or pathlib.Path.home() / 'AppData' / 'Local')
     folder = root / 'HappyWheelsModLauncher'
     folder.mkdir(parents=True, exist_ok=True)
@@ -53,7 +70,7 @@ def write_log(text: str) -> None:
         existing = path.read_text(encoding='utf-8') if path.exists() else ''
         path.write_text(existing + text + '\n', encoding='utf-8')
     except OSError:
-        pass
+        pass  # logging must never take the window down
 
 
 class Launcher(tk.Tk):
@@ -65,6 +82,8 @@ class Launcher(tk.Tk):
             try:
                 self.iconbitmap(default=str(icon))
             except Exception:
+                # Tk on Windows is picky: default= works in some builds, the
+                # positional call in others. Taskbar icon is the PNG below.
                 try:
                     self.iconbitmap(str(icon))
                 except Exception:
@@ -93,6 +112,8 @@ class Launcher(tk.Tk):
         self._update_info: dict | None = None
         self._update_path: pathlib.Path | None = None
         self._build()
+        # Registry + GitHub after the window is actually drawn, so the first
+        # paint isn't waiting on Steam or the network.
         self.after(50, self._detect)
         self.after(80, self._check_launcher_update)
 
@@ -104,7 +125,7 @@ class Launcher(tk.Tk):
 
         rail = tk.Frame(root, bg=RAIL, width=250, padx=22, pady=28)
         rail.grid(row=0, column=0, sticky='nsw')
-        rail.grid_propagate(False)
+        rail.grid_propagate(False)  # pin the rail at 250px even if labels are short
 
         stamp = tk.Label(
             rail, text=f'VERSION {VERSION}', fg=CORAL, bg=RAIL,
@@ -134,6 +155,7 @@ class Launcher(tk.Tk):
             fg=MINT, bg=RAIL, font=('Georgia', 9, 'bold'), wraplength=200, justify='left',
         ).pack(anchor='w')
         self._discord_link(credits, bg=RAIL)
+        # side='bottom' stacks last-packed on top, so this note sits above credits.
         tk.Label(
             rail,
             text='Keep this launcher. It updates itself and can re-patch the game after a Steam update.',
@@ -145,6 +167,7 @@ class Launcher(tk.Tk):
         stage.grid_rowconfigure(0, weight=1)
         stage.grid_columnconfigure(0, weight=1)
 
+        # All pages exist from the start; show() just grids the current one.
         self.pages['update'] = self._page_update(stage)
         self.pages['welcome'] = self._page_welcome(stage)
         self.pages['locate'] = self._page_locate(stage)
@@ -158,6 +181,7 @@ class Launcher(tk.Tk):
         tk.Label(parent, text=lede, fg=MUTED, bg=STEEL, font=('Georgia', 12), justify='left', wraplength=620).pack(anchor='w', pady=(8, 22))
 
     def _discord_link(self, parent: tk.Widget, bg: str, **pack) -> None:
+        # Tk has no real hyperlink widget. This is a label that opens the browser.
         link = tk.Label(
             parent,
             text='Join Discord',
@@ -254,7 +278,7 @@ class Launcher(tk.Tk):
         self._heading(page, 'Installing', 'This takes a minute. Do not close the window or open the modded game yet.')
         card = self._card(page)
         style = ttk.Style()
-        style.theme_use('clam')
+        style.theme_use('clam')  # default ttk looks like Windows 95; clam lets us color the bar
         style.configure('Mod.Horizontal.TProgressbar', troughcolor=PATH_BG, background=CORAL, bordercolor=LINE, lightcolor=CORAL, darkcolor=CORAL)
         self.bar = ttk.Progressbar(card, style='Mod.Horizontal.TProgressbar', maximum=100, mode='determinate')
         self.bar.pack(fill='x')
@@ -270,7 +294,7 @@ class Launcher(tk.Tk):
         )
         card = self._card(page)
         style = ttk.Style()
-        style.theme_use('clam')
+        style.theme_use('clam')  # default ttk looks like Windows 95; clam lets us color the bar
         style.configure('Mod.Horizontal.TProgressbar', troughcolor=PATH_BG, background=CORAL, bordercolor=LINE, lightcolor=CORAL, darkcolor=CORAL)
         self.update_bar = ttk.Progressbar(card, style='Mod.Horizontal.TProgressbar', maximum=100, mode='determinate')
         self.update_bar.pack(fill='x')
@@ -299,6 +323,7 @@ class Launcher(tk.Tk):
         for page in self.pages.values():
             page.grid_forget()
         self.pages[name].grid(row=0, column=0, sticky='nsew')
+        # 'update' isn't in STEPS, so the rail stays on Welcome (index 0).
         index = STEPS.index(name) if name in STEPS else 0
         for i, label in enumerate(self.step_labels):
             label.configure(fg=INK if i <= index else MUTED)
@@ -312,11 +337,12 @@ class Launcher(tk.Tk):
             except Exception:
                 write_log(traceback.format_exc())
 
+        # daemon so a hung GitHub request doesn't keep the process alive
         threading.Thread(target=run, daemon=True).start()
 
     def _offer_self_update(self, info: dict) -> None:
         if self.step in ('install', 'done'):
-            return
+            return  # don't yank them off the progress / ready screens
         self._update_info = info
         notes = info.get('notes') or ''
         extra = (' ' + notes) if notes else ''
@@ -325,6 +351,7 @@ class Launcher(tk.Tk):
         self._update_yes.configure(state='normal')
         self._update_no.configure(state='normal')
         self.show('update')
+        # Start the zip download while they're still reading the prompt.
         threading.Thread(target=self._prefetch_update, args=(info,), daemon=True).start()
 
     def _prefetch_update(self, info: dict) -> None:
@@ -351,6 +378,7 @@ class Launcher(tk.Tk):
         def run():
             try:
                 if not getattr(sys, 'frozen', False):
+                    # python installer\app.py has no EXE sitting on disk to overwrite.
                     raise RuntimeError('This is a source build, so it cannot replace an EXE.')
                 path = self._update_path or download_update(info)
                 self.after(0, lambda: self._apply_self_update(path, info))
@@ -364,7 +392,7 @@ class Launcher(tk.Tk):
         self.update_bar['value'] = 90
         self.update_status.set(f'Installing v{info["version"]} and restarting…')
         try:
-            self.withdraw()
+            self.withdraw()  # hide first; wscript swaps the EXE after we exit
             apply_and_restart(path)
         except Exception as error:
             write_log(traceback.format_exc())
@@ -382,7 +410,7 @@ class Launcher(tk.Tk):
             found = find_happy_wheels()
             self.game_path.set(str(found) if found else '')
             self.game_status.set('Found your Steam Happy Wheels folder.' if found else 'We could not find it automatically.')
-            self.refresh_library()
+            self.refresh_library()  # catalog fetch doesn't need the game path, but badges do
         except Exception as error:
             write_log(traceback.format_exc())
             self.game_status.set('Could not scan for Happy Wheels: ' + str(error))
@@ -399,6 +427,8 @@ class Launcher(tk.Tk):
 
         def run():
             try:
+                # Compare the GitHub catalog against whatever is already in
+                # Happy Wheels\mods so we can badge New / Update / Up to date.
                 catalog = sync_mods(
                     self.catalog_url,
                     bundled=project_root() / 'mods',
@@ -426,7 +456,7 @@ class Launcher(tk.Tk):
     def _render_mods(self, catalog: list[dict]) -> None:
         for child in self.mod_list.winfo_children():
             child.destroy()
-        self.mod_vars = []
+        self.mod_vars = []  # (catalog entry, checkbox) — start_install reads this
         if not catalog:
             tk.Label(self.mod_list, text='No mods were found.', fg='#9aa79e', bg=STEEL, font=('Georgia', 11)).pack(anchor='w')
             return
@@ -478,6 +508,8 @@ class Launcher(tk.Tk):
 
         def run():
             try:
+                # packager.install is the whole patch: verify Steam files, copy
+                # selected mods, rewrite app.asar, fix the EXE hash.
                 game = install(
                     pathlib.Path(source),
                     enabled_ids=mods,
@@ -509,7 +541,7 @@ class Launcher(tk.Tk):
     def open_folder(self) -> None:
         folder = pathlib.Path(self.game_path.get())
         if folder.exists():
-            os.startfile(folder)  # type: ignore[attr-defined]
+            os.startfile(folder)  # type: ignore[attr-defined]  # Windows Explorer; not on posix
 
 
 def main() -> None:
@@ -517,7 +549,7 @@ def main() -> None:
         if sys.platform == 'win32':
             try:
                 from ctypes import windll
-                windll.shcore.SetProcessDpiAwareness(1)
+                windll.shcore.SetProcessDpiAwareness(1)  # otherwise Tk is blurry on scaled displays
             except Exception:
                 pass
         app = Launcher()

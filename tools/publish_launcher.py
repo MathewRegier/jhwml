@@ -2,6 +2,9 @@
 
 New EXEs check https://raw.githubusercontent.com/MathewRegier/jhwml/main/mod-store/launcher.json
 and download the zip from GitHub Releases.
+
+The zip itself is gitignored (mod-store/zips/). Commit launcher.json and
+`gh release create` the zip.
 """
 from __future__ import annotations
 

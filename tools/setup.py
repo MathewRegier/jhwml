@@ -1,4 +1,10 @@
-"""Command-line installer. Prefer the Mod Launcher EXE for friends."""
+"""Command-line installer. Prefer the Mod Launcher EXE for friends.
+
+    python tools\\setup.py "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Happy Wheels"
+
+Same patch as the GUI Install button. No catalog UI — uses whatever is
+already in the cache / bundled mods folder.
+"""
 import argparse
 import pathlib
 import sys

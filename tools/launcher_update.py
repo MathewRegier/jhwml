@@ -1,4 +1,16 @@
-"""Download and apply JHWML self-updates without extra windows."""
+"""Download and apply JHWML self-updates without extra windows.
+
+Shipped EXEs poll:
+
+  https://raw.githubusercontent.com/MathewRegier/jhwml/main/mod-store/launcher.json
+
+If the version there is newer we download the zip (GitHub Release), then
+hand off to a wscript that waits for this process to die, copies the new
+EXE over ours, and relaunches. Windows will not let us overwrite our own
+file while we're running.
+
+HW_LAUNCHER_SKIP_UPDATE=1 and HW_LAUNCHER_DRY_RUN=1 are for tests.
+"""
 from __future__ import annotations
 
 import hashlib
@@ -16,6 +28,7 @@ from mod_store import _read_url, _safe_extract, cache_dir, catalog_base, is_newe
 
 DEFAULT_LAUNCHER_URL = 'https://raw.githubusercontent.com/MathewRegier/jhwml/main/mod-store/launcher.json'
 
+# Keep the helper wscript off-screen. Old .bat version flashed a console.
 CREATE_NO_WINDOW = 0x08000000
 CREATE_NEW_PROCESS_GROUP = 0x00000200
 DETACHED_PROCESS = 0x00000008
@@ -66,6 +79,7 @@ def extract_launcher_exe(blob: bytes, dest: pathlib.Path) -> pathlib.Path:
         if not candidates:
             raise ValueError('The launcher update zip did not contain an EXE.')
         by_name = {path.name.lower(): path for path in candidates}
+        # Prefer the current EXE name; fall back to the 0.1.x filename.
         chosen = by_name.get(EXE_NAME.lower()) or by_name.get(LEGACY_EXE_NAME.lower()) or candidates[0]
         target = dest / EXE_NAME
         target.write_bytes(chosen.read_bytes())
@@ -74,6 +88,8 @@ def extract_launcher_exe(blob: bytes, dest: pathlib.Path) -> pathlib.Path:
 
 def download_update(info: dict, catalog_url: str | None = None, dest: pathlib.Path | None = None) -> pathlib.Path:
     file_name = info['file']
+    # New manifests use a full GitHub Releases URL. Old ones were a path
+    # next to launcher.json.
     url = file_name if file_name.startswith('https://') else catalog_base(launcher_manifest_url()) + file_name.lstrip('/')
     blob = _read_url(url)
     digest = hashlib.sha256(blob).hexdigest()
@@ -87,6 +103,8 @@ def download_update(info: dict, catalog_url: str | None = None, dest: pathlib.Pa
 
 
 def write_replace_script(current_exe: pathlib.Path, new_exe: pathlib.Path, pid: int | None = None) -> pathlib.Path:
+    # The VBS waits on our PID, copies via a .new staging file, then starts
+    # the new EXE. Arguments: source, target, pid, oldpath.
     script = cache_dir() / 'updates' / 'apply-update.vbs'
     script.parent.mkdir(parents=True, exist_ok=True)
     old_bat = script.with_suffix('.bat')
@@ -145,7 +163,7 @@ def apply_and_restart(new_exe: pathlib.Path, current_exe: pathlib.Path | None = 
     target = current.with_name(EXE_NAME)
     script = write_replace_script(current, new_exe)
     if os.environ.get('HW_LAUNCHER_DRY_RUN'):
-        return script
+        return script  # tests inspect the VBS without spawning wscript
     windir = pathlib.Path(os.environ.get('WINDIR', r'C:\Windows'))
     wscript = windir / 'System32' / 'wscript.exe'
     if not wscript.is_file():
@@ -167,4 +185,4 @@ def apply_and_restart(new_exe: pathlib.Path, current_exe: pathlib.Path | None = 
         creationflags=creationflags,
         close_fds=True,
     )
-    os._exit(0)
+    os._exit(0)  # skip atexit; the VBS is watching this PID

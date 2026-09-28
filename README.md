@@ -69,5 +69,3 @@ To ship a new EXE:
 ## Help
 
 [Join Discord](https://discord.gg/XcZePBgDBJ)
-
-Docs site: **Settings → Pages** is already set to **Deploy from a branch → `/docs`**. After a push, wait a minute for [https://mathewregier.github.io/jhwml/](https://mathewregier.github.io/jhwml/).
