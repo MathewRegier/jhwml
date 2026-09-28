@@ -1,0 +1,8 @@
+{
+  "id": "jhwml-mod-launcher",
+  "name": "JHWML - Mod Launcher",
+  "version": "0.2.2",
+  "file": "https://raw.githubusercontent.com/MathewRegier/happy-wheels-ghost-relay/main/mod-store/zips/JHWML-Mod-Launcher-0.2.2.zip",
+  "sha256": "4763a455198198c735e37334891547309ed39a48c8eb22c97369e30f976ac169",
+  "notes": "Mod artwork is applied by the launcher. The old asset script is no longer installed."
+}

@@ -1,0 +1,5 @@
+VERSION = '0.2.2'
+NAME = 'JHWML - Mod Launcher'
+EXE_NAME = NAME + '.exe'
+LEGACY_EXE_NAME = 'Happy Wheels Mod Launcher.exe'
+USER_AGENT = f'JHWML/{VERSION}'

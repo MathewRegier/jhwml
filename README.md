@@ -1,0 +1,75 @@
+# JHWML
+
+Windows launcher and mod framework for Steam **Happy Wheels 1.99.2**.
+
+Created by Jimbob · Discord **jimbob1111**
+
+This repository does **not** include Happy Wheels, `Happy Wheels.exe`, or `app.asar`. You need a legal Steam copy of the game.
+
+**Docs:** [https://mathewregier.github.io/jhwml/](https://mathewregier.github.io/jhwml/)
+
+Other developers: start at [Make a mod](docs/make-a-mod.md). The stable in-game API is [`window.HWMod`](docs/api.md).
+
+The live mod catalog and the multiplayer relay stay on [happy-wheels-ghost-relay](https://github.com/MathewRegier/happy-wheels-ghost-relay).
+
+## Requirements
+
+- Windows
+- [Python 3](https://www.python.org/downloads/) with **Add python.exe to PATH** (to run from source or build the EXE)
+- A legal Steam copy of Happy Wheels 1.99.2
+- Close Happy Wheels before installing
+
+## Run from source
+
+```powershell
+python installer\app.py
+```
+
+Or patch a known Steam folder:
+
+```powershell
+python tools\setup.py "C:\Program Files (x86)\Steam\steamapps\common\Happy Wheels"
+```
+
+## Build the EXE
+
+```powershell
+powershell -ExecutionPolicy Bypass -File installer\build.ps1
+```
+
+That writes `dist\JHWML - Mod Launcher.exe`. It does not ship the game.
+
+A Steam update or **Verify integrity of game files** can remove the loader. Run the launcher again after that.
+
+## Self-updates
+
+Shipped EXEs check:
+
+`https://raw.githubusercontent.com/MathewRegier/jhwml/main/mod-store/launcher.json`
+
+The zip URL in that file should be a **GitHub Release** on this repo (`jhwml/releases`). The mod catalog stays on [happy-wheels-ghost-relay](https://github.com/MathewRegier/happy-wheels-ghost-relay).
+
+To ship a new EXE:
+
+1. Bump `tools/launcher_version.py`
+2. `powershell -ExecutionPolicy Bypass -File installer\build.ps1`
+3. `python tools\publish_launcher.py`
+4. Commit `mod-store/launcher.json` on this repo
+5. `gh release create vX.Y.Z mod-store\zips\JHWML-Mod-Launcher-X.Y.Z.zip --title "JHWML X.Y.Z"`
+6. Push the copied `launcher.json` on the relay repo too, so existing **0.2.2** EXEs (which still look next to `catalog.json`) can update once. After that they check this repo.
+
+## Layout
+
+| Path | What it is |
+| --- | --- |
+| `installer/` | Launcher window and EXE build |
+| `core/` | Loader injected into the game, plus `hw-mod-sdk.js` |
+| `tools/packager.py` | Patches the Steam game in place |
+| `docs/` | GitHub Pages developer docs |
+| `examples/hello-hw-mod/` | Copy-this-folder sample mod |
+
+## Help
+
+Discord: **jimbob1111**
+
+Docs site: **Settings → Pages** is already set to **Deploy from a branch → `/docs`**. After a push, wait a minute for [https://mathewregier.github.io/jhwml/](https://mathewregier.github.io/jhwml/).

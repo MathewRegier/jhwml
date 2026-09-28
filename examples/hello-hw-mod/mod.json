@@ -1,0 +1,11 @@
+{
+  "id": "hello-hw-mod",
+  "name": "Hello HWMod",
+  "version": "1.0.0",
+  "author": "Jimbob",
+  "description": "Tiny overlay that uses window.HWMod. Copy this folder into Happy Wheels/mods and restart.",
+  "enabled": true,
+  "priority": 50,
+  "hwmod": "1",
+  "web": ["main.js"]
+}
