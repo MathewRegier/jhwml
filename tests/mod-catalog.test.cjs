@@ -37,4 +37,8 @@ test('catalog stores optional hwmod and loads the hello example',()=>{
   const fromExample=loadCatalog(path.dirname(example)).find((mod)=>mod.id==='hello-hw-mod');
   assert.equal(fromExample.hwmod,'1');
   assert.deepEqual(fromExample.web,['main.js']);
+  const first=path.join(__dirname,'..','examples','first-hw-mod');
+  const fromFirst=loadCatalog(path.dirname(first)).find((mod)=>mod.id==='first-hw-mod');
+  assert.equal(fromFirst.hwmod,'1');
+  assert.deepEqual(fromFirst.web,['main.js']);
 });

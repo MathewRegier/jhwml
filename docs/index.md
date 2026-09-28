@@ -7,6 +7,7 @@ Created by Jimbob · Discord **jimbob1111**
 You need a legal Steam copy of the game. This project never ships Happy Wheels, `Happy Wheels.exe`, or `app.asar`.
 
 - [Install (players)](install-for-players.md)
+- [Your first mod](first-mod.md) — step-by-step HUD with `window.HWMod`
 - [Make a mod](make-a-mod.md)
 - [`window.HWMod` API](api.md)
 - [Electron main and preload](electron.md)

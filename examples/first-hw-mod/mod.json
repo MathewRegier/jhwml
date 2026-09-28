@@ -1,0 +1,11 @@
+{
+  "id": "first-hw-mod",
+  "name": "First HWMod",
+  "version": "1.0.0",
+  "author": "Jimbob",
+  "description": "Ride card HUD that teaches window.HWMod. Copy this folder into Happy Wheels/mods and restart.",
+  "enabled": true,
+  "priority": 40,
+  "hwmod": "1",
+  "web": ["main.js"]
+}

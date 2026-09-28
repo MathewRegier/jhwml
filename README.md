@@ -8,7 +8,7 @@ This repository does **not** include Happy Wheels, `Happy Wheels.exe`, or `app.a
 
 **Docs:** [https://mathewregier.github.io/jhwml/](https://mathewregier.github.io/jhwml/)
 
-Other developers: start at [Make a mod](docs/make-a-mod.md). The stable in-game API is [`window.HWMod`](docs/api.md).
+Other developers: start at [Your first mod](docs/first-mod.md), then [Make a mod](docs/make-a-mod.md). The stable in-game API is [`window.HWMod`](docs/api.md).
 
 The live mod catalog and the multiplayer relay stay on [happy-wheels-ghost-relay](https://github.com/MathewRegier/happy-wheels-ghost-relay).
 
@@ -66,7 +66,8 @@ To ship a new EXE:
 | `core/` | Loader injected into the game, plus `hw-mod-sdk.js` |
 | `tools/packager.py` | Patches the Steam game in place |
 | `docs/` | GitHub Pages developer docs |
-| `examples/hello-hw-mod/` | Copy-this-folder sample mod |
+| `examples/first-hw-mod/` | Step-by-step SDK tutorial (ride card HUD) |
+| `examples/hello-hw-mod/` | Tiny overlay if you already know the layout |
 
 ## Help
 

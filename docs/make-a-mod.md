@@ -2,7 +2,9 @@
 
 Put a folder in `Happy Wheels\mods\` after the launcher has patched the game once. Restart Happy Wheels. The loader copies your files and injects your page scripts **before** the stock `dependencies.js`.
 
-Copy [examples/hello-hw-mod](https://github.com/MathewRegier/jhwml/tree/main/examples/hello-hw-mod) and change the `id`.
+**New to this?** Walk through [Your first mod](first-mod.md). Copy [`examples/first-hw-mod`](https://github.com/MathewRegier/jhwml/tree/main/examples/first-hw-mod) and follow the `STEP` comments in `web/main.js`.
+
+Already know the layout? Copy [`examples/hello-hw-mod`](https://github.com/MathewRegier/jhwml/tree/main/examples/hello-hw-mod) and change the `id`.
 
 ## Folder
 
