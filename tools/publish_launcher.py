@@ -36,7 +36,7 @@ def launcher_payload(name: str, digest: str, file_url: str) -> dict:
         'version': VERSION,
         'file': file_url,
         'sha256': digest,
-        'notes': 'Mod artwork is applied by the launcher. The old asset script is no longer installed.',
+        'notes': 'Supports the Happy Wheels 1.99.2-s Steam update. Open the launcher, let it finish updating, then press Install.',
     }
 
 

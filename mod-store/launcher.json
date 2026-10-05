@@ -1,8 +1,8 @@
 {
   "id": "jhwml-mod-launcher",
   "name": "JHWML - Mod Launcher",
-  "version": "0.2.2",
-  "file": "https://raw.githubusercontent.com/MathewRegier/happy-wheels-ghost-relay/main/mod-store/zips/JHWML-Mod-Launcher-0.2.2.zip",
-  "sha256": "4763a455198198c735e37334891547309ed39a48c8eb22c97369e30f976ac169",
-  "notes": "Mod artwork is applied by the launcher. The old asset script is no longer installed."
+  "version": "0.2.3",
+  "file": "https://github.com/MathewRegier/jhwml/releases/download/v0.2.3/JHWML-Mod-Launcher-0.2.3.zip",
+  "sha256": "5999f99c25dd8b042e7d7385009beb33482640346c34cd170a1f722de19014de",
+  "notes": "Supports the Happy Wheels 1.99.2-s Steam update. Open the launcher, let it finish updating, then press Install."
 }

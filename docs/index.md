@@ -1,6 +1,6 @@
 # JHWML
 
-A Windows launcher and **mod framework** for Steam **Happy Wheels 1.99.2**.
+A Windows launcher and **mod framework** for Steam **Happy Wheels 1.99.2-s**.
 
 Created by Jimbob · [Join Discord](https://discord.gg/XcZePBgDBJ)
 
@@ -17,4 +17,4 @@ You need a legal Steam copy of the game. This project never ships Happy Wheels, 
 
 The public source for the launcher and SDK is **[github.com/MathewRegier/jhwml](https://github.com/MathewRegier/jhwml)**.
 
-Happy Wheels internals are obfuscated and **locked to Steam 1.99.2**. A game update needs a new launcher. Other mods should use `window.HWMod`, not webpack module numbers.
+Happy Wheels internals are obfuscated and **locked to Steam 1.99.2-s**. A game update needs a new launcher. Other mods should use `window.HWMod`, not webpack module numbers.

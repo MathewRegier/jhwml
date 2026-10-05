@@ -10,7 +10,7 @@ Drop extra mods as folders into `Happy Wheels\mods\`. Each folder needs a `mod.j
 
 A Steam update or **Verify integrity of game files** can remove the loader. Run the launcher again after that.
 
-If Happy Wheels itself gets a new version, wait for a new launcher. This framework is built for **1.99.2**.
+If Happy Wheels itself gets a new version, wait for a new launcher. This framework is built for **1.99.2-s**.
 
 Launcher self-updates download from [github.com/MathewRegier/jhwml](https://github.com/MathewRegier/jhwml).
 

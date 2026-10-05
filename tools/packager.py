@@ -2,7 +2,7 @@
 
 The launcher calls install(). That:
 
-  1. Checks you're on Steam 1.99.2 (hashes in game-manifest.json)
+  1. Checks you're on Steam 1.99.2-s (hashes in game-manifest.json)
   2. Backs up Happy Wheels.exe + app.asar the first time
   3. Copies selected mods into Happy Wheels\\mods\\
   4. Unpacks the asar, drops in core/ (the loader + SDK), patches
@@ -27,7 +27,7 @@ import time
 
 from launcher_version import VERSION
 
-GAME_VERSION = '1.99.2'
+GAME_VERSION = '1.99.2-s'
 
 
 def strip_inlined_hw_ghost_net(text: str) -> str:
@@ -364,7 +364,7 @@ def install(source: pathlib.Path, dest: pathlib.Path | None = None, enabled_ids:
     if not looks_like_game(game):
         raise ValueError('That folder does not look like Happy Wheels.')
 
-    # SHA256 of stock 1.99.2 files. Frozen EXE looks next to packager.py
+    # SHA256 of stock 1.99.2-s files. Frozen EXE looks next to packager.py
     # (copied into the bundle as tools/game-manifest.json).
     manifest_path = root / 'tools' / 'game-manifest.json'
     if not manifest_path.exists():
@@ -399,7 +399,7 @@ def install(source: pathlib.Path, dest: pathlib.Path | None = None, enabled_ids:
         return game.joinpath(*pathlib.PurePosixPath(name).parts).read_bytes()
 
     # After the first install the EXE + asar hashes won't match stock, by
-    # design. Skip those two; everything else still has to be 1.99.2.
+    # design. Skip those two; everything else still has to be 1.99.2-s.
     skip = {'Happy Wheels.exe', 'resources/app.asar'} if already else set()
     for name, expected in manifest.items():
         if name in skip:

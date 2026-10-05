@@ -1,12 +1,12 @@
 # `window.HWMod`
 
-Stable page API for Steam Happy Wheels **1.99.2**. The SDK is injected before every mod script.
+Stable page API for Steam Happy Wheels **1.99.2-s**. The SDK is injected before every mod script.
 
 Walkthrough: [Your first mod](first-mod.md). Working files: [`examples/first-hw-mod`](https://github.com/MathewRegier/jhwml/tree/main/examples/first-hw-mod).
 
 ```js
 HWMod.version          // SDK version string, currently '1.0.0'
-HWMod.game             // '1.99.2'
+HWMod.game             // '1.99.2-s'
 HWMod.mods             // [{id, name, web}, ...] from the loader
 HWMod.on(event, fn)    // boot, session, menu, character, tick, restart, death, finish
 HWMod.off(event, fn)

@@ -1,7 +1,7 @@
 (function (root) {
   'use strict';
   var VERSION = '1.0.0';
-  var GAME = '1.99.2';
+  var GAME = '1.99.2-s';
   var STATE_IDS = [35057, 29552];
   var PIXI_ID = 99430;
 

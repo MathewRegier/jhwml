@@ -1,6 +1,6 @@
 # JHWML
 
-Windows launcher and mod framework for Steam **Happy Wheels 1.99.2**.
+Windows launcher and mod framework for Steam **Happy Wheels 1.99.2-s**.
 
 Created by Jimbob · [Join Discord](https://discord.gg/XcZePBgDBJ)
 
@@ -14,7 +14,7 @@ Other developers: start at [Your first mod](docs/first-mod.md), then [Make a mod
 
 - Windows
 - [Python 3](https://www.python.org/downloads/) with **Add python.exe to PATH** (to run from source or build the EXE)
-- A legal Steam copy of Happy Wheels 1.99.2
+- A legal Steam copy of Happy Wheels 1.99.2-s
 - Close Happy Wheels before installing
 
 ## Run from source

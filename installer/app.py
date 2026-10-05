@@ -230,7 +230,7 @@ class Launcher(tk.Tk):
         note = self._card(page)
         tk.Label(
             note,
-            text='Built for Happy Wheels 1.99.2 by Jimbob.\n\nKeep this launcher and open it for future mod or launcher updates.\n\nIf the game ever updates, open this launcher again. It will update itself, then you can press Install to re-patch Happy Wheels.',
+            text='Built for Happy Wheels 1.99.2-s by Jimbob.\n\nKeep this launcher and open it for future mod or launcher updates.\n\nIf the game ever updates, open this launcher again. It will update itself, then you can press Install to re-patch Happy Wheels.',
             fg='#9aa79e', bg=CARD, font=('Georgia', 11), justify='left', wraplength=600,
         ).pack(anchor='w')
         self._button(self._actions(page), 'Continue', lambda: self.show('locate'), primary=True)

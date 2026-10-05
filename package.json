@@ -1,7 +1,7 @@
 {
   "name": "jhwml",
   "private": true,
-  "description": "Happy Wheels 1.99.2 mod launcher and SDK",
+  "description": "Happy Wheels 1.99.2-s mod launcher and SDK",
   "scripts": {
     "test": "node --test tests/*.test.cjs"
   }

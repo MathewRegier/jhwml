@@ -2,7 +2,7 @@
 
 This page builds a small **ride card** HUD with `window.HWMod`. The finished files live in [`examples/first-hw-mod`](https://github.com/MathewRegier/jhwml/tree/main/examples/first-hw-mod). You can copy that folder, or type it yourself as you read.
 
-You need a legal Steam copy of Happy Wheels **1.99.2** and the JHWML launcher.
+You need a legal Steam copy of Happy Wheels **1.99.2-s** and the JHWML launcher.
 
 ## What you will make
 

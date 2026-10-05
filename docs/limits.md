@@ -1,6 +1,6 @@
 # Limits
 
-- **Game version:** Steam Happy Wheels **1.99.2** only. A new game build needs a new launcher.
+- **Game version:** Steam Happy Wheels **1.99.2-s** only. A new game build needs a new launcher.
 - **Legal copy:** The launcher patches files you already own. Do not redistribute the game.
 - **Obfuscation:** Character classes, Pixi exports, and Box2D live behind minified webpack modules. Those IDs belong in `core/hw-mod-sdk.js`, not in your mod.
 - **One tick bus:** Wrap `renderer.render` through `HWMod.on('tick')`. Do not add a second `world.Step`.
