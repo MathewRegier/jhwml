@@ -112,7 +112,7 @@ def write_replace_script(current_exe: pathlib.Path, new_exe: pathlib.Path, pid: 
         old_bat.unlink()
     script.write_text(
         'Option Explicit\r\n'
-        'Dim sh, fso, wmi, procs, source, target, oldpath, pid, folder, staged, backup\r\n'
+        'Dim sh, fso, wmi, procs, source, target, oldpath, pid, folder, staged, backup, env\r\n'
         'Set sh = CreateObject("WScript.Shell")\r\n'
         'Set fso = CreateObject("Scripting.FileSystemObject")\r\n'
         'source = WScript.Arguments(0)\r\n'
@@ -146,6 +146,12 @@ def write_replace_script(current_exe: pathlib.Path, new_exe: pathlib.Path, pid: 
         'If Not fso.FileExists(target) Then WScript.Quit 3\r\n'
         'If fso.GetFile(target).Size <> fso.GetFile(source).Size Then WScript.Quit 4\r\n'
         'sh.CurrentDirectory = folder\r\n'
+        'Set env = sh.Environment("PROCESS")\r\n'
+        'env("PYINSTALLER_RESET_ENVIRONMENT") = "1"\r\n'
+        'env.Remove "_PYI_ARCHIVE_FILE"\r\n'
+        'env.Remove "_PYI_APPLICATION_HOME_DIR"\r\n'
+        'env.Remove "_PYI_PARENT_PROCESS_LEVEL"\r\n'
+        'env.Remove "_PYI_SPLASH_IPC"\r\n'
         'sh.Run """" & target & """", 1, False\r\n'
         'If StrComp(oldpath, target, 1) <> 0 And fso.FileExists(oldpath) Then fso.DeleteFile oldpath, True\r\n'
         'If fso.FileExists(backup) Then fso.DeleteFile backup, True\r\n'
@@ -153,6 +159,16 @@ def write_replace_script(current_exe: pathlib.Path, new_exe: pathlib.Path, pid: 
         encoding='utf-8',
     )
     return script
+
+
+def _restart_environment() -> dict[str, str]:
+    """Drop the running onefile folder so the replacement EXE starts clean."""
+    env = os.environ.copy()
+    for key in list(env):
+        if key.startswith('_PYI_'):
+            env.pop(key, None)
+    env['PYINSTALLER_RESET_ENVIRONMENT'] = '1'
+    return env
 
 
 def apply_and_restart(new_exe: pathlib.Path, current_exe: pathlib.Path | None = None) -> pathlib.Path:
@@ -178,6 +194,7 @@ def apply_and_restart(new_exe: pathlib.Path, current_exe: pathlib.Path | None = 
     subprocess.Popen(
         [str(wscript), '//B', '//Nologo', str(script), str(new_exe), str(target), str(os.getpid()), str(current)],
         cwd=str(target.parent),
+        env=_restart_environment(),
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,

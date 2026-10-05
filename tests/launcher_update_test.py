@@ -107,6 +107,8 @@ class LauncherUpdateTests(unittest.TestCase):
             text = script.read_text(encoding='utf-8')
             self.assertIn('Win32_Process', text)
             self.assertIn('CopyFile', text)
+            self.assertIn('PYINSTALLER_RESET_ENVIRONMENT', text)
+            self.assertIn('_PYI_APPLICATION_HOME_DIR', text)
             self.assertNotIn('cmd.exe', text)
             self.assertNotIn('start ""', text)
 
