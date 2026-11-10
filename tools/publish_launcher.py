@@ -36,7 +36,7 @@ def launcher_payload(name: str, digest: str, file_url: str) -> dict:
         'version': VERSION,
         'file': file_url,
         'sha256': digest,
-        'notes': 'Fixes the launcher restarting into a missing Python DLL after an update. Supports Happy Wheels 1.99.2-s. After it restarts, press Install.',
+        'notes': 'Supports Happy Wheels 1.99.3. After the launcher restarts, press Install.',
     }
 
 

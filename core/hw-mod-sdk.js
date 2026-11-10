@@ -1,9 +1,10 @@
 (function (root) {
   'use strict';
   var VERSION = '1.0.0';
-  var GAME = '1.99.2-s';
-  var STATE_IDS = [35057, 29552];
-  var PIXI_ID = 99430;
+  var GAME = '1.99.3';
+  var STATE_IDS = [64750, 35057, 29552];
+  var PIXI_ID = 90010;
+  var TEXTURE_ID = 18052;
 
   function createSdk(win, options) {
     win = win || root;
@@ -109,11 +110,108 @@
       return {happyWheels: hw, sessionController: hw.sessionController || null};
     }
 
+    function adaptState(g) {
+      if (!g || g.__hw1993) return g;
+      if (!('currentSession' in g)) {
+        Object.defineProperty(g, 'currentSession', { configurable: true, get: function () { return g.$$A || null; } });
+      }
+      if (!('rootApp' in g)) {
+        Object.defineProperty(g, 'rootApp', { configurable: true, get: function () { return adaptApp(g.$$tk); } });
+      }
+      g.__hw1993 = true;
+      return g;
+    }
+
+    function findGame(screen) {
+      if (!screen || typeof screen !== 'object') return null;
+      if (screen.happyWheels) return screen.happyWheels;
+      var keys = Object.keys(screen);
+      for (var i = 0; i < keys.length; i++) {
+        var value = screen[keys[i]];
+        if (!value || typeof value !== 'object') continue;
+        if (value.sessionController || value.mainMenu || value.characterMenu) return value;
+        var session = value.session;
+        if (session && (session.m_world || session.containerSprite || session.isEditorTest != null)) return value;
+      }
+      return null;
+    }
+
+    function adaptApp(app) {
+      if (!app || app.__hw1993) return app || null;
+      var manager = app.screenManager;
+      if (manager && !('currentScreen' in manager)) {
+        Object.defineProperty(manager, 'currentScreen', { configurable: true, get: function () { return manager.$$uB || null; } });
+      }
+      if (manager && !manager.__hwScreen) {
+        var previous = Object.getOwnPropertyDescriptor(manager, 'currentScreen');
+        Object.defineProperty(manager, 'currentScreen', {
+          configurable: true,
+          get: function () {
+            var screen = previous && previous.get ? previous.get.call(manager) : (manager.$$uB || null);
+            if (screen && !('happyWheels' in screen)) {
+              Object.defineProperty(screen, 'happyWheels', { configurable: true, get: function () { return findGame(screen); } });
+            }
+            return screen;
+          },
+        });
+        manager.__hwScreen = true;
+      }
+      app.__hw1993 = true;
+      return app;
+    }
+
+    function aliasPixi(p) {
+      if (!p || p.__hw1993) return p;
+      var sprite = null;
+      var texture = null;
+      var graphics = null;
+      var keys = Object.keys(p);
+      for (var i = 0; i < keys.length; i++) {
+        var value = p[keys[i]];
+        if (typeof value !== 'function' || !value.prototype) continue;
+        if (!graphics && typeof value.prototype.drawPolygon === 'function' && typeof value.prototype.beginFill === 'function') graphics = value;
+        if (!sprite && 'anchor' in value.prototype && 'texture' in value.prototype) sprite = value;
+        if (!texture && typeof value.from === 'function' && !('anchor' in value.prototype)) texture = value;
+      }
+      if (!p.kxk && (sprite || p.vQo)) p.kxk = sprite || p.vQo;
+      if (!p.mcf && (p.Kwm || p.ss8)) p.mcf = p.Kwm || p.ss8;
+      if (!p.gPd && texture) p.gPd = texture;
+      if (!p.Graphics && graphics) p.Graphics = graphics;
+      if (!p.WpD && api.require) {
+        try {
+          var textures = api.require(TEXTURE_ID);
+          if (textures && textures.TextureCache) p.WpD = { TextureCache: textures.TextureCache };
+        } catch (e) {}
+      }
+      p.__hw1993 = true;
+      return p;
+    }
+
+    function installShims(requireFn) {
+      if (!requireFn || !requireFn.m || requireFn.__hw1993) return;
+      function define(id, factory) {
+        if (requireFn.m[id]) return;
+        requireFn.m[id] = function (module) {
+          module.exports = factory();
+        };
+      }
+      define(99430, function () { return aliasPixi(requireFn(PIXI_ID)); });
+      define(4971, function () { return { kx: aliasPixi(requireFn(PIXI_ID)).kxk }; });
+      define(35057, function () { return { w: adaptState(requireFn(64750).G) }; });
+      define(29552, function () { return { w: adaptState(requireFn(64750).G) }; });
+      requireFn.__hw1993 = true;
+    }
+
     function pixi() {
       if (pixiModules) return pixiModules;
       if (!api.require) return null;
       try {
-        var p = api.require(PIXI_ID);
+        var p = null;
+        try { p = api.require(PIXI_ID); } catch (e) {}
+        if (!p) {
+          try { p = api.require(99430); } catch (e2) {}
+        }
+        p = aliasPixi(p);
         if (!p) return null;
         var Graphics = p.Graphics;
         if (!Graphics) {
@@ -151,7 +249,7 @@
         var keys = Object.keys(win);
         for (var i = 0; i < keys.length; i++) {
           var key = keys[i];
-          if (!/^Tmu[A-Za-z0-9]+$/.test(key)) continue;
+          if (!/^Tm[uw][A-Za-z0-9]+$/.test(key)) continue;
           var chunks = win[key];
           if (Array.isArray(chunks) && chunks.push !== Array.prototype.push) return chunks;
         }
@@ -164,10 +262,10 @@
       if (!api.require) return false;
       for (var i = 0; i < STATE_IDS.length; i++) {
         try {
-          var w = api.require(STATE_IDS[i]);
-          w = w && w.w;
-          if (w && (w.rootApp || 'currentSession' in w || w.totalCharacters != null)) {
-            api.state = w;
+          var exported = api.require(STATE_IDS[i]);
+          var w = exported && (exported.w || exported.G);
+          if (w && (w.rootApp || w.$$tk || 'currentSession' in w || '$$A' in w || w.totalCharacters != null || w.characterIndex != null)) {
+            api.state = adaptState(w);
             return true;
           }
         } catch (e) {}
@@ -176,6 +274,7 @@
     }
 
     function attachRequire(requireFn) {
+      installShims(requireFn);
       api.require = requireFn;
       grabState();
     }

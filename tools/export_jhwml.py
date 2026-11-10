@@ -89,7 +89,7 @@ def copy_public(dest: pathlib.Path) -> None:
             {
                 'name': 'jhwml',
                 'private': True,
-                'description': 'Happy Wheels 1.99.2 mod launcher and SDK',
+                'description': 'Happy Wheels 1.99.3 mod launcher and SDK',
                 'scripts': {'test': 'node --test tests/*.test.cjs'},
             },
             indent=2,
