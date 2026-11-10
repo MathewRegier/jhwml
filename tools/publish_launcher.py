@@ -1,16 +1,15 @@
 """Zip the built launcher EXE and write mod-store/launcher.json.
 
 New EXEs check https://raw.githubusercontent.com/MathewRegier/jhwml/main/mod-store/launcher.json
-and download the zip from GitHub Releases.
-
-The zip itself is gitignored (mod-store/zips/). Commit launcher.json and
-`gh release create` the zip.
+and download the zip from GitHub Releases. A copy of launcher.json is still written to the
+relay repo so 0.2.2 clients (which look next to catalog.json) can update once.
 """
 from __future__ import annotations
 
 import hashlib
 import json
 import pathlib
+import shutil
 import sys
 import zipfile
 
@@ -19,6 +18,7 @@ sys.path.insert(0, str(ROOT / 'tools'))
 from launcher_version import EXE_NAME, NAME, VERSION  # noqa: E402
 
 STORE = ROOT / 'mod-store'
+RELAY_STORE = ROOT / 'relay' / 'mod-store'
 
 
 def sha256_file(path: pathlib.Path) -> str:
@@ -36,12 +36,24 @@ def launcher_payload(name: str, digest: str, file_url: str) -> dict:
         'version': VERSION,
         'file': file_url,
         'sha256': digest,
-        'notes': 'Supports Happy Wheels 1.99.3. After the launcher restarts, press Install.',
+        'notes': 'Fixes the Multiplayer button on Happy Wheels 1.99.3. After the launcher restarts, press Install.',
     }
 
 
 def write_json(path: pathlib.Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2) + '\n', encoding='utf-8')
+
+
+def patch_catalog(catalog_path: pathlib.Path, payload: dict) -> None:
+    if not catalog_path.is_file():
+        return
+    catalog = json.loads(catalog_path.read_text(encoding='utf-8'))
+    catalog['launcher'] = {
+        'version': payload['version'],
+        'file': payload['file'],
+        'sha256': payload['sha256'],
+    }
+    write_json(catalog_path, catalog)
 
 
 def main() -> None:
@@ -59,6 +71,15 @@ def main() -> None:
     digest = sha256_file(dest)
     payload = launcher_payload(name, digest, release_url)
     write_json(STORE / 'launcher.json', payload)
+    patch_catalog(STORE / 'catalog.json', payload)
+    if (ROOT / 'relay' / '.git').is_dir():
+        (RELAY_STORE / 'zips').mkdir(parents=True, exist_ok=True)
+        shutil.copy2(dest, RELAY_STORE / 'zips' / name)
+        # 0.2.2 clients resolve relative paths against the relay catalog folder.
+        # They also accept https, so point them at the same GitHub Release as jhwml.
+        write_json(RELAY_STORE / 'launcher.json', payload)
+        patch_catalog(RELAY_STORE / 'catalog.json', payload)
+        print('Copied to', RELAY_STORE)
     print('Wrote', dest)
     print('sha256', digest)
     print('Next: commit mod-store/launcher.json on jhwml, then:')

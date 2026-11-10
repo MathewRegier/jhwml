@@ -420,7 +420,7 @@ def install(source: pathlib.Path, dest: pathlib.Path | None = None, enabled_ids:
     if enabled_ids is not None:
         for mod_id in catalog_ids:
             leftover = game / 'mods' / mod_id
-            if mod_id not in enabled_ids and leftover.exists():
+            if mod_id not in enabled_ids and mod_id not in {'jimbobs-builder', 'jimbobs-level-cloner'} and leftover.exists():
                 force_remove(leftover, leftover.name)
     for mod in chosen.values():
         if enabled_ids is None or mod['id'] in enabled_ids:

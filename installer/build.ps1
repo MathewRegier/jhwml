@@ -1,13 +1,8 @@
-# One-file windowed EXE. Run from anywhere; we cd to the repo root first.
-# --noupx: Defender already side-eyes this enough without packing.
-# --paths tools so `import packager` works without making tools a package.
-# --add-data copies the loader, icons, and (optional) bundled mods into the
-# PyInstaller temp extract. `mods` can be empty — the catalog is downloaded
-# at runtime. node_modules\ws is for the multiplayer websocket client if
-# that mod is selected at install time.
-
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot\..
+python -c "import os, shutil, pathlib; src=pathlib.Path('mods'); dest=pathlib.Path(os.environ['TEMP'])/'jhwml-public-mods'; shutil.rmtree(dest, ignore_errors=True); dest.mkdir(parents=True); skip={'jimbobs-builder','jimbobs-level-cloner'};
+[shutil.copytree(p, dest/p.name) if p.is_dir() else shutil.copy2(p, dest/p.name) for p in src.iterdir() if p.name not in skip and not p.name.startswith('.')]
+print(dest)"
 python -m pip install --disable-pip-version-check pyinstaller
 python -m PyInstaller --noconfirm --clean --windowed --onefile --noupx --name "JHWML - Mod Launcher" `
   --icon installer\icon.ico `
@@ -17,7 +12,7 @@ python -m PyInstaller --noconfirm --clean --windowed --onefile --noupx --name "J
   --hidden-import launcher_update `
   --hidden-import launcher_version `
   --add-data "core;core" `
-  --add-data "mods;mods" `
+  --add-data "$env:TEMP\jhwml-public-mods;mods" `
   --add-data "tools\game-manifest.json;tools" `
   --add-data "tools\packager.py;tools" `
   --add-data "tools\mod_store.py;tools" `

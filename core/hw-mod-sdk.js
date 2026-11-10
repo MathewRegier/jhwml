@@ -122,14 +122,23 @@
       return g;
     }
 
+    function isGame(value) {
+      return !!(value && typeof value === 'object' && (value.mainMenu || value.sessionController || value.editor || value.characterMenu));
+    }
+
     function findGame(screen) {
       if (!screen || typeof screen !== 'object') return null;
-      if (screen.happyWheels) return screen.happyWheels;
-      var keys = Object.keys(screen);
-      for (var i = 0; i < keys.length; i++) {
-        var value = screen[keys[i]];
+      // 1.99.3 keeps the game on a non-enumerable $$rp. Reading happyWheels here
+      // would call the getter that is trying to find the game.
+      if (isGame(screen.$$rp)) return screen.$$rp;
+      var names = [];
+      try { names = Object.getOwnPropertyNames(screen); } catch (e) {}
+      for (var i = 0; i < names.length; i++) {
+        if (names[i] === 'happyWheels') continue;
+        var value;
+        try { value = screen[names[i]]; } catch (e2) { continue; }
         if (!value || typeof value !== 'object') continue;
-        if (value.sessionController || value.mainMenu || value.characterMenu) return value;
+        if (isGame(value)) return value;
         var session = value.session;
         if (session && (session.m_world || session.containerSprite || session.isEditorTest != null)) return value;
       }
